@@ -1,0 +1,8 @@
+# .gitignore
+venv/
+__pycache__/
+*.pyc
+.env
+data/*.json
+chroma_db/
+.pytest_cache/
