@@ -9,3 +9,4 @@ metastore_db/
 derby.log
 .agents
 .claude
+data/bronze/**/*.json
