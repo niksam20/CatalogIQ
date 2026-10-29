@@ -66,6 +66,7 @@ def setup_vector_store():
 
 collection = setup_vector_store()
 
+# AI Assistant Search Bar
 query = st.text_input(
     "Ask a question about the Lakehouse schemas or columns:", 
     placeholder="e.g. Which table contains trial phases, and what is its primary key?"
@@ -94,3 +95,13 @@ Question:
 
     with st.expander("Inspected Catalog Schema Context"):
         st.text(context)
+
+st.divider()
+st.subheader("📚 Browse Enriched Data Catalog")
+if os.path.exists("data/enriched_catalog.json"):
+    with open("data/enriched_catalog.json", "r") as f:
+        catalog_data = json.load(f)
+    for tbl in catalog_data:
+        with st.expander(f"🗂️ {tbl['table_name']} ({tbl['row_count']} rows)"):
+            st.write(f"**Description:** {tbl['table_description']}")
+            st.table(tbl["columns"])
