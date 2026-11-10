@@ -37,3 +37,5 @@ data/bronze/*.json
 !data/bronze/trials_batch_20261029_102441_1.json
 !data/bronze/trials_batch_20261029_102448_2.json
 !data/bronze/trials_batch_20261029_102450_3.json
+
+.gitignore
