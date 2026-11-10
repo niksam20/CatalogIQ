@@ -18,12 +18,16 @@ logger = logging.getLogger("IngestionService")
 API_BASE_URL = "https://clinicaltrials.gov/api/v2/studies"
 S3_BUCKET = os.getenv("AWS_S3_BUCKET")
 
-s3_client = boto3.client(
-    "s3",
-    aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
-    aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
-    region_name=os.getenv("AWS_DEFAULT_REGION", "us-east-1")
-)
+
+def get_s3_client():
+    """Build boto3 S3 client using environment or default AWS credentials chain."""
+    kwargs = {"region_name": os.getenv("AWS_DEFAULT_REGION", "us-east-1")}
+    if os.getenv("AWS_ACCESS_KEY_ID"):
+        kwargs["aws_access_key_id"] = os.getenv("AWS_ACCESS_KEY_ID")
+    if os.getenv("AWS_SECRET_ACCESS_KEY"):
+        kwargs["aws_secret_access_key"] = os.getenv("AWS_SECRET_ACCESS_KEY")
+    return boto3.client("s3", **kwargs)
+
 
 @retry(
     stop=stop_after_attempt(5),
@@ -44,6 +48,7 @@ def fetch_api_page(condition: str, page_token: str = None) -> dict:
     response.raise_for_status()
     return response.json()
 
+
 def upload_to_s3_bronze(payload: dict, batch_index: int) -> str:
     now = datetime.now(timezone.utc)
     partition = f"bronze/studies/year={now.year}/month={now.strftime('%m')}"
@@ -51,8 +56,20 @@ def upload_to_s3_bronze(payload: dict, batch_index: int) -> str:
     s3_key = f"{partition}/{filename}"
 
     body = json.dumps(payload, ensure_ascii=False)
-    
-    s3_client.put_object(
+
+    # Keep local copy in data/bronze if directory exists
+    local_dir = os.path.join("data", "bronze")
+    if os.path.exists(local_dir):
+        local_path = os.path.join(local_dir, filename)
+        with open(local_path, "w", encoding="utf-8") as f:
+            f.write(body)
+
+    if not S3_BUCKET:
+        logger.warning(f"AWS_S3_BUCKET not configured. Saved batch {batch_index} locally to {filename}.")
+        return filename
+
+    client = get_s3_client()
+    client.put_object(
         Bucket=S3_BUCKET,
         Key=s3_key,
         Body=body.encode("utf-8"),
@@ -60,6 +77,7 @@ def upload_to_s3_bronze(payload: dict, batch_index: int) -> str:
     )
     logger.info(f"Wrote batch {batch_index} to s3://{S3_BUCKET}/{s3_key}")
     return s3_key
+
 
 def ingest_trials(condition: str = "Oncology", max_records: int = 300):
     logger.info(f"Starting ingestion for condition '{condition}', target={max_records} records.")
@@ -70,13 +88,13 @@ def ingest_trials(condition: str = "Oncology", max_records: int = 300):
     while total_fetched < max_records:
         data = fetch_api_page(condition=condition, page_token=page_token)
         studies = data.get("studies", [])
-        
+
         if not studies:
             logger.info("No further studies returned by endpoint.")
             break
 
         upload_to_s3_bronze(data, batch_idx)
-        
+
         total_fetched += len(studies)
         logger.info(f"Ingested {total_fetched}/{max_records} cumulative studies.")
         batch_idx += 1
@@ -87,6 +105,7 @@ def ingest_trials(condition: str = "Oncology", max_records: int = 300):
             break
 
     logger.info(f"Ingestion complete. Total ingested: {total_fetched}")
+
 
 if __name__ == "__main__":
     ingest_trials(condition="Oncology", max_records=300)

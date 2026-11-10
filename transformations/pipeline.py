@@ -8,23 +8,40 @@ S3_BUCKET = os.getenv("AWS_S3_BUCKET")
 
 def download_s3_bronze_locally():
     os.makedirs("data/bronze", exist_ok=True)
-    s3 = boto3.client(
-        "s3",
-        aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
-        aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
-        region_name=os.getenv("AWS_DEFAULT_REGION", "us-east-1")
-    )
-    
-    response = s3.list_objects_v2(Bucket=S3_BUCKET, Prefix="bronze/studies/")
-    downloaded = 0
-    for obj in response.get("Contents", []):
-        key = obj["Key"]
-        if key.endswith(".json"):
-            local_filename = os.path.join("data/bronze", os.path.basename(key))
-            s3.download_file(S3_BUCKET, key, local_filename)
-            downloaded += 1
-            
-    print(f"[INFO] Downloaded {downloaded} raw JSON files from S3.")
+    existing_files = [f for f in os.listdir("data/bronze") if f.endswith(".json")]
+
+    if not S3_BUCKET:
+        if existing_files:
+            print(f"[WARNING] AWS_S3_BUCKET not set. Using {len(existing_files)} existing bronze JSON files in data/bronze/.")
+            return
+        raise ValueError("AWS_S3_BUCKET environment variable is missing and no local bronze files found in data/bronze/.")
+
+    try:
+        from botocore.config import Config
+        fast_config = Config(connect_timeout=3, read_timeout=5, retries={"max_attempts": 1})
+        s3 = boto3.client(
+            "s3",
+            config=fast_config,
+            aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
+            aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
+            region_name=os.getenv("AWS_DEFAULT_REGION", "us-east-1")
+        )
+        
+        response = s3.list_objects_v2(Bucket=S3_BUCKET, Prefix="bronze/studies/")
+        downloaded = 0
+        for obj in response.get("Contents", []):
+            key = obj["Key"]
+            if key.endswith(".json"):
+                local_filename = os.path.join("data/bronze", os.path.basename(key))
+                s3.download_file(S3_BUCKET, key, local_filename)
+                downloaded += 1
+                
+        print(f"[INFO] Downloaded {downloaded} raw JSON files from S3.")
+    except Exception as e:
+        if existing_files:
+            print(f"[WARNING] S3 sync failed ({e}). Proceeding with {len(existing_files)} existing bronze files in data/bronze/.")
+        else:
+            raise RuntimeError(f"Failed to download bronze data from S3 and no local bronze files exist: {e}") from e
 
 def run_pipeline():
     download_s3_bronze_locally()
@@ -114,6 +131,8 @@ def run_pipeline():
         con.execute(f"COPY {tbl} TO '{target_path}' (FORMAT PARQUET)")
         row_count = con.execute(f"SELECT COUNT(*) FROM {tbl}").fetchone()[0]
         print(f"[SUCCESS] Table '{tbl}' exported to {target_path} ({row_count} rows).")
+
+    con.close()
 
 if __name__ == "__main__":
     run_pipeline()
