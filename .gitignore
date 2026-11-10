@@ -1,12 +1,39 @@
+# Virtual environments
+.venv/
 venv/
+env/
+
+# Python byte-code, distribution and caches
 __pycache__/
-*.pyc
-.env
-data/*.json
-chroma_db/
+*.py[cod]
+*$py.class
+*.egg-info/
 .pytest_cache/
+
+# Environment files & secrets
+.env
+.env.*
+!.env.example
+
+# Vector store and temporary artifacts
+chroma_db/
+*.tmp
+*.log
+
+# Spark & database metastore leftovers
 metastore_db/
 derby.log
-.agents
-.claude
-data/bronze/**/*.json
+
+# IDE & OS files
+.agents/
+.claude/
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Bronze raw batch downloads (keep initial sample batch only)
+data/bronze/*.json
+!data/bronze/trials_batch_20261029_102441_1.json
+!data/bronze/trials_batch_20261029_102448_2.json
+!data/bronze/trials_batch_20261029_102450_3.json

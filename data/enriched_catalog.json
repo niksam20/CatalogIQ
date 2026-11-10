@@ -1,0 +1,110 @@
+[
+  {
+    "table_name": "silver_studies",
+    "row_count": 899,
+    "table_description": "This silver-layer table stores cleansed and standardized core metadata for registered clinical trials sourced from public registries. It serves as an analytics-ready foundation for monitoring clinical study progress, operational milestones, and trial portfolio distribution.",
+    "columns": [
+      {
+        "name": "nct_id",
+        "type": "VARCHAR",
+        "description": "The unique ClinicalTrials.gov identifier assigned to the clinical study registry record."
+      },
+      {
+        "name": "title",
+        "type": "VARCHAR",
+        "description": "The official or brief human-readable title describing the clinical trial protocol and therapeutic objective."
+      },
+      {
+        "name": "overall_status",
+        "type": "VARCHAR",
+        "description": "The current operational recruitment and execution status of the clinical trial across all participating study sites."
+      },
+      {
+        "name": "phase",
+        "type": "VARCHAR",
+        "description": "The regulatory clinical trial development stage indicating the investigational maturity and testing scope of the intervention."
+      },
+      {
+        "name": "lead_sponsor",
+        "type": "VARCHAR",
+        "description": "The primary organization, institution, or pharmaceutical entity overseeing study initiation, protocol compliance, and operational governance."
+      },
+      {
+        "name": "start_date",
+        "type": "VARCHAR",
+        "description": "The calendar date when participant enrollment formally begins or the first clinical procedure is performed."
+      }
+    ]
+  },
+  {
+    "table_name": "silver_conditions",
+    "row_count": 1828,
+    "table_description": "This cleansed silver-layer table maps clinical study records to the specific medical conditions, diseases, or health indications investigated in each trial. It standardizes condition entities to facilitate downstream clinical cohort discovery, disease burden analysis, and cross-study comparisons.",
+    "columns": [
+      {
+        "name": "nct_id",
+        "type": "VARCHAR",
+        "description": "The unique National Clinical Trial registry identifier assigned by ClinicalTrials.gov to globally reference and track each registered study."
+      },
+      {
+        "name": "condition_name",
+        "type": "VARCHAR",
+        "description": "The reported name of the disease, disorder, syndrome, or health indication targeted by the clinical trial protocol."
+      }
+    ]
+  },
+  {
+    "table_name": "silver_interventions",
+    "row_count": 1706,
+    "table_description": "Cleaned and curated clinical trials data table for silver_interventions.",
+    "columns": [
+      {
+        "name": "nct_id",
+        "type": "VARCHAR",
+        "description": "Stores the nct_id attribute for the trial record."
+      },
+      {
+        "name": "intervention_type",
+        "type": "VARCHAR",
+        "description": "Stores the intervention_type attribute for the trial record."
+      },
+      {
+        "name": "intervention_name",
+        "type": "VARCHAR",
+        "description": "Stores the intervention_name attribute for the trial record."
+      }
+    ]
+  },
+  {
+    "table_name": "gold_trials_summary",
+    "row_count": 1646,
+    "table_description": "Cleaned and curated clinical trials data table for gold_trials_summary.",
+    "columns": [
+      {
+        "name": "condition_name",
+        "type": "VARCHAR",
+        "description": "Stores the condition_name attribute for the trial record."
+      },
+      {
+        "name": "phase",
+        "type": "VARCHAR",
+        "description": "Stores the phase attribute for the trial record."
+      },
+      {
+        "name": "overall_status",
+        "type": "VARCHAR",
+        "description": "Stores the overall_status attribute for the trial record."
+      },
+      {
+        "name": "trial_count",
+        "type": "BIGINT",
+        "description": "Stores the trial_count attribute for the trial record."
+      },
+      {
+        "name": "distinct_sponsors",
+        "type": "BIGINT",
+        "description": "Stores the distinct_sponsors attribute for the trial record."
+      }
+    ]
+  }
+]
