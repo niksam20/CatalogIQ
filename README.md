@@ -90,6 +90,7 @@ Create a `.env` file in the project root. It is intentionally ignored by Git.
 
 ```dotenv
 GEMINI_API_KEY=your_gemini_api_key
+GEMINI_MODEL=gemini-2.5-flash
 
 AWS_S3_BUCKET=your-catalogiq-bucket
 AWS_ACCESS_KEY_ID=your_aws_access_key_id
